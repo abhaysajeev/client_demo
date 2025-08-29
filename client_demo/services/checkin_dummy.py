@@ -3,13 +3,15 @@ import frappe
 from frappe import _
 import datetime 
 @frappe.whitelist(allow_guest=True)
-def mark_attendance(employee, log_type=None, device_id=None, shift=None):
+def mark_attendance(employee=None, log_type=None, device_id=None, shift=None):
     """
     Insert an attendance record into Employee Checkin.
     Required: employee, log_type, time
     Optional: device_id, shift
 
     """
+
+    employee = "Arun R"
     # Validate employee exists
     if not frappe.db.exists("Employee", employee):
         return {"success": False, "message": _(f"Employee {employee} not found")}
@@ -21,7 +23,7 @@ def mark_attendance(employee, log_type=None, device_id=None, shift=None):
     # Create Employee Checkin record
 
     time = datetime.datetime.now()
-    
+
     try:
         checkin = frappe.get_doc({
             "doctype": "Employee Checkin",
