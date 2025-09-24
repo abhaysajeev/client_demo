@@ -21,6 +21,12 @@ def mark_attendance(employee, log_type=None, device_id=None, shift=None):
     # Validate employee exists
     if not frappe.db.exists("Employee", employee):
         return {"success": False, "message": _(f"Employee {employee} not found")}
+    
+    user = frappe.session.user
+    # print("$"*50)
+    # print(user)
+    shift_type = frappe.db.get_value("Employee",{"user_id":user},["shift_type"])
+
 
     try:
         # If log_type not passed, decide automatically
@@ -47,7 +53,7 @@ def mark_attendance(employee, log_type=None, device_id=None, shift=None):
             "log_type": log_type,
             "time": time,
             "device_id": device_id,
-            "shift": shift,
+            "shift": shift_type if shift_type else shift,
             "device_id":"Remote"
         })
         checkin.insert(ignore_permissions=True)
