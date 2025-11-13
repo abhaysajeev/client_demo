@@ -77,55 +77,38 @@ def get_hr_manager_user():
         return user  
     return None
 
-import frappe
 
-@frappe.whitelist()
+@frappe.whitelist(allow_guest=True)
 def get_unapproved_leaves(user_id):
-    """
-    Return open, draft (docstatus=0) Leave Applications for employees who report to
-    the employee corresponding to the given user_id.
-
-    Response format (example):
-    {
-        "status": "success",
-        "manager": "John Manager",
-        "reportees_count": 2,
-        "leave_count": 3,
-        "leaves": [
-            {
-                "name": "LEAVE-0001",
-                "employee": "EMP/0005",
-                "employee_name": "Alice Employee",
-                "leave_type": "Casual Leave",
-                "from_date": "2025-10-01",
-                "to_date": "2025-10-02",
-                "description": "Family Event",
-                "status": "Open",
-                "docstatus": 0
-            }, ...
-        ]
-    }
-    """
-
-    # 1) Get manager's employee_name from user_id
+    # get both manager id (Employee.name) and employee_name
+    manager_id = frappe.db.get_value("Employee", {"user_id": user_id}, "name")
     manager_name = frappe.db.get_value("Employee", {"user_id": user_id}, "employee_name")
-    if not manager_name:
-        return {"status": "error", "message": f"No employee found for user_id {user_id}"}
 
-    # 2) Get direct reportees (Employee.name is the employee ID, e.g. "EMP/0001")
+    if not manager_id and not manager_name:
+        return {"status": "error", "message": f"No employee found for user  {user_id}"}
+
+    # try to get reportees by reports_to = manager_id first (most common)
     reportees = frappe.get_all(
         "Employee",
-        filters={"reports_to": manager_name},
+        filters={"reports_to": manager_name },
         fields=["name", "employee_name", "user_id"]
     )
 
-    employee_names = [r["employee_name"] for r in reportees]
+    if not reportees:
+        return {
+            "status": "success",
+            "manager": manager_name,
+            "reportees_count": 0,
+            "leave_count": 0,
+            "leaves": []
+        }
 
-    # 3) Query Leave Applications where employee in reportees, status = "Open" and docstatus = 0
+    employee_ids = [r["name"] for r in reportees]
+
     leaves = frappe.get_all(
         "Leave Application",
         filters=[
-            ["Leave Application", "employee", "in", employee_names],
+            ["Leave Application", "employee", "in", employee_ids],
             ["Leave Application", "status", "=", "Open"],
             ["Leave Application", "docstatus", "=", 0]
         ],
@@ -145,11 +128,74 @@ def get_unapproved_leaves(user_id):
 
     return {
         "status": "success",
-        "manager": manager_name,
+        "manager": manager_name or manager_id,
         "reportees_count": len(reportees),
         "leave_count": len(leaves),
         "leaves": leaves
     }
 
+@frappe.whitelist(allow_guest=True)
+def approve_leaves(leave_names, manager):
+    pass
 
+# 
+# @frappe.whitelist(allow_guest=True)  
+# def approve_leaves(leave_names, manager_name=None):
+#     """
+#     leave_names: JSON string like '["LEAV-0001","LEAV-0002"]' or a single name.
+#     manager: optional string to store in `approved_by`.
+#     """
+#     import json
+#     try:
+#         names = json.loads(leave_names) if isinstance(leave_names, str) and leave_names.strip().startswith("[") else [leave_names]
+#     except Exception:
+#         names = [leave_names]
+
+#     results = []
+#     for name in names:
+#         try:
+#             doc = frappe.get_doc("Leave Application", name)
+#             value = f"Approved by {manager_name if manager_name else ''}"
+#             frappe.db.set_value("Leave Application", name, "custom_approved_by", value, update_modified=True)
+#             doc.save(ignore_permissions=True)  # use ignore_permissions only if appropriate
+#             results.append({"name": name, "result": "ok"})
+#         except Exception as e:
+#             frappe.log_error(frappe.get_traceback(), "Error Approving Leave")
+#             results.append({"name": name, "result": "error", "msg": str(e)})
+#     return results
+
+
+@frappe.whitelist(allow_guest=True)
+def approve_leave(leave_name, employee):
+    # Input validation
+    if not leave_name:
+        return {"status": "error", "message": "leave_name is required"}
+    if not employee:
+        return {"status": "error", "message": "employee is required"}
+    
+    # Get manager info
+    manager_name = frappe.db.get_value("Employee", {"name": employee}, "reports_to")
+    # Load document safely
+    try:
+        doc = frappe.get_doc("Leave Application", leave_name)
+    except frappe.DoesNotExistError:
+        return {"status": "error", "message": f"Leave Application {leave_name} not found"}
+    
+    # Check document state
+    if doc.docstatus != 0:
+        return {"status": "error", "message": "Leave Application already submitted"}
+    
+    # Update and save
+    value = f"Approved by {manager_name if manager_name else 'HOD'}"
+    try:
+        doc.set("custom_approved_by", value)  
+        doc.save(ignore_permissions=True)
+        frappe.db.commit()
+        return {"status": "success", "message": f"Field updated on {leave_name}"}
+
+    except Exception as e:
+        frappe.log_error(frappe.get_traceback(), "Error approving leave")
+        return {"error": str(e)}
+    
+ 
 
