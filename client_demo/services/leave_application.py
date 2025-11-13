@@ -1,38 +1,50 @@
 import frappe 
 from frappe import _
-
+import client_demo.services.helper_functions as helpers
 
 @frappe.whitelist(allow_guest=True)
-def apply_leave(employee, leave_type, from_date, to_date, reason, half_day=None ):
+def apply_leave(employee, leave_type, from_date, to_date, reason, half_day=None):
+    # normalize input -> employee docname
+    emp_docname = helpers.get_employee_docname(employee)
+    if not emp_docname:
+        return {"status": "error", "message": f"Employee not found: {employee}"}
+     
+    leave_approver = get_leave_approver(employee)
 
-    if not frappe.db.exists("Employee", employee):
-        return {"Error": f"Employee not found: {employee}"}
+    # fetch company from employee doc
+    company = frappe.db.get_value("Employee", emp_docname, "company")
+    if not company:
+        return {"status": "error", "message": "Employee has no Company set and no default available."}
+
+    # optional: validate leave type
+    if not frappe.db.exists("Leave Type", leave_type):
+        return {"status": "error", "message": f"Leave Type not found: {leave_type}"}
+
     try:
         doc = frappe.new_doc("Leave Application")
-        doc.employee = employee
+        doc.employee = emp_docname               # <- use docname
+        doc.employee_name = frappe.db.get_value("Employee", emp_docname, "employee_name")
         doc.leave_type = leave_type
         doc.from_date = from_date
         doc.to_date = to_date
+        doc.company = company
         doc.description = reason
         doc.leave_approver = ""
         doc.half_day = 1 if half_day else 0
         doc.docstatus = 0
 
-        try:
-            leave_approver = get_leave_approver(employee)
-        except Exception:
-            leave_approver = None
-
-        # from hrms.hr.doctype.leave_application.leave_application import LeaveApplication
-        # LeaveApplication.validate_dates_across_allocation = lambda self: None    
-
         doc.insert()
         frappe.db.commit()
-        return {"Success": f"Leave Application {doc.name} successfully submitted. Pending Approval from {leave_approver if leave_approver else 'HOD'}"}
+        return {
+            "status": "success",
+            "message": f"Leave Application {doc.name} created. Pending approval from {leave_approver or 'HOD'}",
+            "leave_name": doc.name
+        }
 
     except Exception as e:
         frappe.log_error(frappe.get_traceback(), "Error adding Leave Application")
-        return {"Error": str(e) }
+        return {"status": "error", "message": str(e)}
+
 
 
 
@@ -47,15 +59,16 @@ def get_leave_types():
         return {"error": str(e)}
     
 
+
 @frappe.whitelist(allow_guest=True)
 def get_leave_approver(employee):
     try:
-        approver = frappe.db.get_value(
-            "Employee",
-            {"employee_name": employee},  
-            "reports_to"                 
-        )
-        return approver
+        emp_docname = helpers.get_employee_docname(employee)
+        if not emp_docname:
+            return None
+        return frappe.db.get_value("Employee", emp_docname, "reports_to")
+
+        
     except Exception as e:
         frappe.log_error(frappe.get_traceback(), "Error fetching Leave Approver")
         return {"error": str(e)}
@@ -138,32 +151,6 @@ def get_unapproved_leaves(user_id):
 def approve_leaves(leave_names, manager):
     pass
 
-# 
-# @frappe.whitelist(allow_guest=True)  
-# def approve_leaves(leave_names, manager_name=None):
-#     """
-#     leave_names: JSON string like '["LEAV-0001","LEAV-0002"]' or a single name.
-#     manager: optional string to store in `approved_by`.
-#     """
-#     import json
-#     try:
-#         names = json.loads(leave_names) if isinstance(leave_names, str) and leave_names.strip().startswith("[") else [leave_names]
-#     except Exception:
-#         names = [leave_names]
-
-#     results = []
-#     for name in names:
-#         try:
-#             doc = frappe.get_doc("Leave Application", name)
-#             value = f"Approved by {manager_name if manager_name else ''}"
-#             frappe.db.set_value("Leave Application", name, "custom_approved_by", value, update_modified=True)
-#             doc.save(ignore_permissions=True)  # use ignore_permissions only if appropriate
-#             results.append({"name": name, "result": "ok"})
-#         except Exception as e:
-#             frappe.log_error(frappe.get_traceback(), "Error Approving Leave")
-#             results.append({"name": name, "result": "error", "msg": str(e)})
-#     return results
-
 
 @frappe.whitelist(allow_guest=True)
 def approve_leave(leave_name, employee):
@@ -173,29 +160,38 @@ def approve_leave(leave_name, employee):
     if not employee:
         return {"status": "error", "message": "employee is required"}
     
+    # Resolve employee correctly
+    emp_docname = helpers.get_employee_docname(employee)
+    if not emp_docname:
+        return {"status": "error", "message": f"Employee not found: {employee}"}
+
     # Get manager info
-    manager_name = frappe.db.get_value("Employee", {"name": employee}, "reports_to")
-    # Load document safely
+    manager_name = frappe.db.get_value("Employee", emp_docname, "reports_to")
+
     try:
+        # Load the Leave Application
         doc = frappe.get_doc("Leave Application", leave_name)
-    except frappe.DoesNotExistError:
-        return {"status": "error", "message": f"Leave Application {leave_name} not found"}
-    
-    # Check document state
-    if doc.docstatus != 0:
-        return {"status": "error", "message": "Leave Application already submitted"}
-    
-    # Update and save
-    value = f"Approved by {manager_name if manager_name else 'HOD'}"
-    try:
-        doc.set("custom_approved_by", value)  
-        doc.save(ignore_permissions=True)
-        frappe.db.commit()
-        return {"status": "success", "message": f"Field updated on {leave_name}"}
+
+        # Check document state
+        if doc.docstatus != 0:
+            return {"status": "error", "message": "Leave Application already submitted"}
+
+        # Approval text
+        value = f"Approved by {manager_name if manager_name else 'HOD'}"
+        prev_value = doc.custom_approved_by
+
+        # Check if already approved
+        if not prev_value:
+            doc.set("custom_approved_by", value)
+            doc.save(ignore_permissions=True)
+            frappe.db.commit()
+            return {"status": "success", "message": f"Leave approved: {value}"}
+        else:
+            return {"status": "error", "message": f"Leave already approved by {prev_value}"}
 
     except Exception as e:
         frappe.log_error(frappe.get_traceback(), "Error approving leave")
-        return {"error": str(e)}
-    
+        return {"status": "error", "message": str(e)}
+
  
 
