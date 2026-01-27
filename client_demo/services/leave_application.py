@@ -30,7 +30,7 @@ def apply_leave(employee, leave_type, from_date, to_date, reason, half_day=None)
         doc.company = company
         doc.description = reason
         doc.leave_approver = ""
-        doc.half_day = 1 if half_day else 0
+        doc.half_day = 1 if half_day == 1 else 0
         doc.docstatus = 0
 
         doc.insert()
@@ -93,24 +93,23 @@ def get_hr_manager_user():
 
 @frappe.whitelist(allow_guest=True)
 def get_unapproved_leaves(user_id):
-    # get both manager id (Employee.name) and employee_name
+    # get manager id (Employee.name)
     manager_id = frappe.db.get_value("Employee", {"user_id": user_id}, "name")
-    manager_name = frappe.db.get_value("Employee", {"user_id": user_id}, "employee_name")
 
-    if not manager_id and not manager_name:
-        return {"status": "error", "message": f"No employee found for user  {user_id}"}
+    if not manager_id:
+        return {"status": "error", "message": f"No employee found for user {user_id}"}
 
-    # try to get reportees by reports_to = manager_id first (most common)
+    # Get reportees by reports_to = manager_id (Employee.name)
     reportees = frappe.get_all(
         "Employee",
-        filters={"reports_to": manager_name },
+        filters={"reports_to": manager_id},
         fields=["name", "employee_name", "user_id"]
     )
 
     if not reportees:
         return {
             "status": "success",
-            "manager": manager_name,
+            "manager": manager_id,
             "reportees_count": 0,
             "leave_count": 0,
             "leaves": []
@@ -123,7 +122,9 @@ def get_unapproved_leaves(user_id):
         filters=[
             ["Leave Application", "employee", "in", employee_ids],
             ["Leave Application", "status", "=", "Open"],
-            ["Leave Application", "docstatus", "=", 0]
+            ["Leave Application", "docstatus", "=", 0],
+            ["Leave Application", "custom_approved_by", "=", None]
+
         ],
         fields=[
             "name",
@@ -141,7 +142,7 @@ def get_unapproved_leaves(user_id):
 
     return {
         "status": "success",
-        "manager": manager_name or manager_id,
+        "manager": manager_id,
         "reportees_count": len(reportees),
         "leave_count": len(leaves),
         "leaves": leaves
@@ -165,8 +166,8 @@ def approve_leave(leave_name, employee):
     if not emp_docname:
         return {"status": "error", "message": f"Employee not found: {employee}"}
 
-    # Get manager info
-    manager_name = frappe.db.get_value("Employee", emp_docname, "reports_to")
+    # Get manager info - get the manager's ID (name field)
+    manager_id = frappe.db.get_value("Employee", emp_docname, "reports_to")
 
     try:
         # Load the Leave Application
@@ -177,7 +178,7 @@ def approve_leave(leave_name, employee):
             return {"status": "error", "message": "Leave Application already submitted"}
 
         # Approval text
-        value = f"Approved by {manager_name if manager_name else 'HOD'}"
+        value = f"Approved by {manager_id if manager_id else 'Manager'}"
         prev_value = doc.custom_approved_by
 
         # Check if already approved
@@ -193,5 +194,80 @@ def approve_leave(leave_name, employee):
         frappe.log_error(frappe.get_traceback(), "Error approving leave")
         return {"status": "error", "message": str(e)}
 
- 
 
+
+@frappe.whitelist(allow_guest=True)
+def get_pending_leave_application_status(employee, month=None, year=None):
+    try:
+        # Convert employee input → Employee Docname
+        emp_docname = helpers.get_employee_docname(employee)
+        if not frappe.db.exists("Employee", {"name": emp_docname}): return {"success": False, "message": f"Employee {employee} not found"}
+
+
+        # ---------------- YEAR ----------------
+        if not year:
+            year = frappe.utils.now_datetime().year
+        else:
+            year = int(year)
+
+        # ---------------- MONTH ----------------
+        # If month not provided → use current month
+        if not month:
+            month_number = frappe.utils.now_datetime().month
+        else:
+            # month provided → convert to month number (supports "nov", "november", "Nov")
+            try:
+                test_date = frappe.utils.getdate(f"{year}-{month}-01")
+                month_number = test_date.month
+            except:
+                return {
+                    "success": False,
+                    "message": f"Invalid month: {month}"
+                }
+
+        # ---------------- FILTERS ----------------
+        filters = {"employee": emp_docname}
+
+        # Month filter
+        start_date = f"{year}-{month_number:02d}-01"
+        end_date = frappe.utils.get_last_day(start_date)
+        filters["from_date"] = ["between", [start_date, end_date]]
+
+        # ---------------- FETCH ----------------
+        leaves = frappe.get_all(
+            "Leave Application",
+            filters=filters,
+            fields="*"
+        )
+
+        # ---------------- IF NONE ----------------
+        if not leaves:
+            return {
+                "success": True,
+                "message": f"No leave applications found for {employee} in {month or frappe.utils.formatdate(start_date, 'MMMM')} {year}",
+                "approved": [],
+                "not_approved": []
+            }
+
+        # ---------------- GROUPING ----------------
+        approved = [d for d in leaves if d.get("custom_approved_by")]
+        not_approved = [d for d in leaves if not d.get("custom_approved_by")]
+
+        return {
+            "success": True,
+            "message": f"Leave applications for {employee} in {month or frappe.utils.formatdate(start_date, 'MMMM')} {year}",
+            "approved": approved,
+            "not_approved": not_approved,
+            "total": len(leaves)
+        }
+
+    except Exception as e:
+        frappe.log_error(frappe.get_traceback(), "Leave App API Error")
+        return {"success": False, "error": str(e)}
+
+
+    
+
+@frappe.whitelist(allow_guest=True)
+def view_leave_status():
+    pass

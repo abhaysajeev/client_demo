@@ -1,0 +1,631 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 0 20px;
+            color: #333;
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #34495e;
+            margin-top: 30px;
+            padding: 10px;
+            background: #ecf0f1;
+            border-left: 4px solid #3498db;
+        }
+        h3 {
+            color: #555;
+            margin-top: 20px;
+        }
+        pre {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        code {
+            background: #f8f9fa;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+        pre code {
+            background: none;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        strong {
+            color: #2c3e50;
+        }
+        hr {
+            border: none;
+            border-top: 2px solid #3498db;
+            margin: 30px 0;
+        }
+    </style>
+</head>
+<body>
+<h1>ERPNext Mobile App API Documentation</h1>
+<br>
+<p><strong>Version:<strong> 2.0  </p>
+<p><strong>Base URL Format:<strong> `<base_url>/api/method/client_demo.services`  </p>
+<p><strong>Last Updated:<strong> January 27, 2026</p>
+<br>
+<hr>
+<br>
+<h1>PART 1: ATTENDANCE & LEAVE APIs</h1>
+<br>
+<hr>
+<br>
+<h2>1. Mark Attendance (Biometric/Direct)</h2>
+<br>
+<p><strong>Endpoint:<strong> `<base_url>/api/method/client_demo.services.checkin_dummy.mark_attendance`  </p>
+<p><strong>Method:<strong> POST</p>
+<br>
+<h3>Input Parameters</h3>
+<pre><code>{
+  "employee": "AMAL R"
+}</code></pre>
+<br>
+<table>
+<tr><th>Parameter</th><th>Type</th><th>Required</th><th>Description</th></tr>
+<tr><td>employee</td><td>String</td><td>✓ Yes</td><td>Employee unique ID</td></tr>
+<tr><td>log_type</td><td>String</td><td>✗ No</td><td>"IN" or "OUT" (auto-detected)</td></tr>
+</table>
+<br>
+<h3>Output Format</h3>
+<pre><code>{
+  "message": {
+    "success": true,
+    "message": "Attendance recorded successfully as IN",
+    "log_type": "IN",
+    "time": "2026-01-27 11:42:11.962345"
+  }
+}</code></pre>
+<br>
+<hr>
+<br>
+<h2>2. Get Employee Dashboard</h2>
+<br>
+<p><strong>Endpoint:<strong> `<base_url>/api/method/client_demo.services.checkin_dummy.get_employee_details`  </p>
+<p><strong>Method:<strong> POST</p>
+<br>
+<h3>Input Parameters</h3>
+<pre><code>{
+  "user_id": "amal.r@softlandindia.co.in",
+  "select_date": "2026-01-27"
+}</code></pre>
+<br>
+<table>
+<tr><th>Parameter</th><th>Type</th><th>Required</th><th>Description</th></tr>
+<tr><td>user_id</td><td>String</td><td>✓ Yes</td><td>Employee's email address</td></tr>
+<tr><td>select_date</td><td>String</td><td>✗ No</td><td>Date in YYYY-MM-DD format</td></tr>
+</table>
+<br>
+<h3>Output Format</h3>
+<pre><code>{
+  "message": {
+    "success": true,
+    "employee_details": {
+      "name": "AMAL R",
+      "department": "Web Applications Department - SIL",
+      "designation": "Junior Software Programmer"
+    },
+    "selected_date_data": {
+      "date": "2026-01-27",
+      "daily_working_hours": 8.5,
+      "entry_time": "09:00",
+      "exit_time": "17:30",
+      "status": "Present"
+    },
+    "weekly_summary": {
+      "total_hours_worked": 42.5,
+      "average_work_hours": 8.5,
+      "days_worked": 5
+    },
+    "monthly_summary": {
+      "total_hours_worked": 170.0,
+      "average_work_hours": 8.5,
+      "days_worked": 20
+    }
+  }
+}</code></pre>
+<br>
+<hr>
+<br>
+<h2>3. Apply for Leave</h2>
+<br>
+<p><strong>Endpoint:<strong> `<base_url>/api/method/client_demo.services.leave_application.apply_leave`  </p>
+<p><strong>Method:<strong> POST</p>
+<br>
+<h3>Input Parameters</h3>
+<pre><code>{
+  "employee": "AMAL R",
+  "leave_type": "Casual Leave",
+  "from_date": "2026-02-01",
+  "to_date": "2026-02-02",
+  "reason": "Personal work",
+  "half_day": 0
+}</code></pre>
+<br>
+<table>
+<tr><th>Parameter</th><th>Type</th><th>Required</th><th>Description</th></tr>
+<tr><td>employee</td><td>String</td><td>✓ Yes</td><td>Employee unique ID</td></tr>
+<tr><td>leave_type</td><td>String</td><td>✓ Yes</td><td>Leave type name</td></tr>
+<tr><td>from_date</td><td>String</td><td>✓ Yes</td><td>Start date (YYYY-MM-DD)</td></tr>
+<tr><td>to_date</td><td>String</td><td>✓ Yes</td><td>End date (YYYY-MM-DD)</td></tr>
+<tr><td>reason</td><td>String</td><td>✓ Yes</td><td>Reason for leave</td></tr>
+<tr><td>half_day</td><td>Integer</td><td>✗ No</td><td>1 for half day, 0 for full day</td></tr>
+</table>
+<br>
+<h3>Output Format</h3>
+<pre><code>{
+  "message": {
+    "status": "success",
+    "message": "Leave Application HR-LAP-00001 created. Pending approval from VINOD K",
+    "leave_name": "HR-LAP-00001"
+  }
+}</code></pre>
+<br>
+<hr>
+<br>
+<h2>4. Get Available Leave Types</h2>
+<br>
+<p><strong>Endpoint:<strong> `<base_url>/api/method/client_demo.services.leave_application.get_leave_types`  </p>
+<p><strong>Method:<strong> POST</p>
+<br>
+<h3>Output Format</h3>
+<pre><code>{
+  "message": [
+    "Casual Leave",
+    "Sick Leave",
+    "Privilege Leave"
+  ]
+}</code></pre>
+<br>
+<hr>
+<br>
+<h2>5. Get Unapproved Leaves (Manager)</h2>
+<br>
+<p><strong>Endpoint:<strong> `<base_url>/api/method/client_demo.services.leave_application.get_unapproved_leaves`  </p>
+<p><strong>Method:<strong> POST</p>
+<br>
+<h3>Input Parameters</h3>
+<pre><code>{
+  "user_id": "vinod@softlandindia.co.in"
+}</code></pre>
+<br>
+<h3>Output Format</h3>
+<pre><code>{
+  "message": {
+    "status": "success",
+    "manager": "VINOD K",
+    "reportees_count": 3,
+    "leave_count": 2,
+    "leaves": [
+      {
+        "name": "HR-LAP-00001",
+        "employee": "AMAL R",
+        "leave_type": "Casual Leave",
+        "from_date": "2026-02-01",
+        "to_date": "2026-02-02",
+        "status": "Open"
+      }
+    ]
+  }
+}</code></pre>
+<br>
+<hr>
+<br>
+<h2>6. Approve Leave (Manager)</h2>
+<br>
+<p><strong>Endpoint:<strong> `<base_url>/api/method/client_demo.services.leave_application.approve_leave`  </p>
+<p><strong>Method:<strong> POST</p>
+<br>
+<h3>Input Parameters</h3>
+<pre><code>{
+  "leave_name": "HR-LAP-00001",
+  "employee": "VINOD K"
+}</code></pre>
+<br>
+<h3>Output Format</h3>
+<pre><code>{
+  "message": {
+    "status": "success",
+    "message": "Leave approved: Approved by VINOD K"
+  }
+}</code></pre>
+<br>
+<hr>
+<br>
+<h1>PART 2: REMOTE ATTENDANCE APIs</h1>
+<br>
+<hr>
+<br>
+<h2>7. Mark Remote Attendance</h2>
+<br>
+<p><strong>Endpoint:<strong> `<base_url>/api/method/client_demo.services.remote_attendance.mark_remote_attendance`  </p>
+<p><strong>Method:<strong> POST</p>
+<br>
+<h3>Input Parameters</h3>
+<pre><code>{
+  "employee": "AMAL R",
+  "latitude": 10.8505159,
+  "longitude": 76.2710833,
+  "location_type": "Work From Home",
+  "device_info": "Samsung Galaxy S21",
+  "remarks": "Working from home"
+}</code></pre>
+<br>
+<table>
+<tr><th>Parameter</th><th>Type</th><th>Required</th><th>Description</th></tr>
+<tr><td>employee</td><td>String</td><td>✓ Yes</td><td>Employee unique ID</td></tr>
+<tr><td>latitude</td><td>Float</td><td>✓ Yes</td><td>GPS latitude</td></tr>
+<tr><td>longitude</td><td>Float</td><td>✓ Yes</td><td>GPS longitude</td></tr>
+<tr><td>location_type</td><td>String</td><td>✓ For IN</td><td>"Work From Home" / "Field" / "Service Center"</td></tr>
+<tr><td>device_info</td><td>String</td><td>✗ No</td><td>Device identifier</td></tr>
+<tr><td>remarks</td><td>String</td><td>✗ No</td><td>Optional notes</td></tr>
+</table>
+<br>
+<h3>Output Format</h3>
+<pre><code>{
+  "message": {
+    "success": true,
+    "name": "RA-2026-00001",
+    "log_type": "IN",
+    "time": "2026-01-27 09:00:00",
+    "location_type": "Work From Home",
+    "workflow_state": "Pending",
+    "message": "Attendance marked as IN. Pending approval from VINOD K"
+  }
+}</code></pre>
+<br>
+<hr>
+<br>
+<h2>8. Get Today Attendance Status</h2>
+<br>
+<p><strong>Endpoint:<strong> `<base_url>/api/method/client_demo.services.remote_attendance.get_today_attendance_status`  </p>
+<p><strong>Method:<strong> POST</p>
+<br>
+<h3>Input Parameters</h3>
+<pre><code>{
+  "employee": "AMAL R"
+}</code></pre>
+<br>
+<h3>Output Format</h3>
+<pre><code>{
+  "message": {
+    "success": true,
+    "date": "2026-01-27",
+    "next_log_type": "OUT",
+    "total_checkins_today": 1,
+    "pending_approvals": 0,
+    "last_checkin": {
+      "name": "RA-2026-00001",
+      "log_type": "IN",
+      "time": "2026-01-27 09:00:00",
+      "status": "Approved",
+      "source": "remote"
+    },
+    "is_first_of_day": false
+  }
+}</code></pre>
+<br>
+<hr>
+<br>
+<h2>9. Get Location Type Options</h2>
+<br>
+<p><strong>Endpoint:<strong> `<base_url>/api/method/client_demo.services.remote_attendance.get_location_type_options`  </p>
+<p><strong>Method:<strong> POST</p>
+<br>
+<h3>Output Format</h3>
+<pre><code>{
+  "message": [
+    "Work From Home",
+    "Field",
+    "Service Center"
+  ]
+}</code></pre>
+<br>
+<hr>
+<br>
+<h2>10. Get Pending Remote Attendance</h2>
+<br>
+<p><strong>Endpoint:<strong> `<base_url>/api/method/client_demo.services.remote_attendance.get_pending_remote_attendance`  </p>
+<p><strong>Method:<strong> POST</p>
+<br>
+<h3>Input Parameters</h3>
+<pre><code>{
+  "employee": "AMAL R"
+}</code></pre>
+<br>
+<h3>Output Format</h3>
+<pre><code>{
+  "message": {
+    "success": true,
+    "count": 1,
+    "data": [
+      {
+        "name": "RA-2026-00001",
+        "log_type": "IN",
+        "time": "2026-01-27 09:00:00",
+        "location_type": "Work From Home",
+        "workflow_state": "Pending",
+        "latitude": 10.8505159,
+        "longitude": 76.2710833
+      }
+    ]
+  }
+}</code></pre>
+<br>
+<hr>
+<br>
+<h2>11. Get Remote Attendance History</h2>
+<br>
+<p><strong>Endpoint:<strong> `<base_url>/api/method/client_demo.services.remote_attendance.get_remote_attendance_history`  </p>
+<p><strong>Method:<strong> POST</p>
+<br>
+<h3>Input Parameters</h3>
+<pre><code>{
+  "employee": "AMAL R",
+  "from_date": "2026-01-01",
+  "to_date": "2026-01-31"
+}</code></pre>
+<br>
+<table>
+<tr><th>Parameter</th><th>Type</th><th>Required</th><th>Description</th></tr>
+<tr><td>employee</td><td>String</td><td>✓ Yes</td><td>Employee unique ID</td></tr>
+<tr><td>from_date</td><td>String</td><td>✗ No</td><td>Start date filter</td></tr>
+<tr><td>to_date</td><td>String</td><td>✗ No</td><td>End date filter</td></tr>
+</table>
+<br>
+<h3>Output Format</h3>
+<pre><code>{
+  "message": {
+    "success": true,
+    "count": 5,
+    "data": [
+      {
+        "name": "RA-2026-00001",
+        "log_type": "IN",
+        "time": "2026-01-27 09:00:00",
+        "location_type": "Work From Home",
+        "workflow_state": "Approved",
+        "approved_by": "VINOD K",
+        "linked_checkin": "EMP-CKIN-00123"
+      }
+    ]
+  }
+}</code></pre>
+<br>
+<hr>
+<br>
+<h2>12. Cancel Remote Attendance</h2>
+<br>
+<p><strong>Endpoint:<strong> `<base_url>/api/method/client_demo.services.remote_attendance.cancel_remote_attendance`  </p>
+<p><strong>Method:<strong> POST</p>
+<br>
+<h3>Input Parameters</h3>
+<pre><code>{
+  "name": "RA-2026-00001",
+  "employee": "AMAL R"
+}</code></pre>
+<br>
+<h3>Output Format</h3>
+<pre><code>{
+  "message": {
+    "success": true,
+    "message": "Remote Attendance RA-2026-00001 cancelled successfully"
+  }
+}</code></pre>
+<br>
+<hr>
+<br>
+<h2>13. Get Today Checkin Pairs</h2>
+<br>
+<p><strong>Endpoint:<strong> `<base_url>/api/method/client_demo.services.remote_attendance.get_today_checkin_pairs`  </p>
+<p><strong>Method:<strong> POST</p>
+<br>
+<h3>Input Parameters</h3>
+<pre><code>{
+  "employee": "AMAL R"
+}</code></pre>
+<br>
+<h3>Output Format</h3>
+<pre><code>{
+  "message": {
+    "success": true,
+    "date": "2026-01-27",
+    "pairs": [
+      {
+        "in_time": "09:00",
+        "out_time": "13:00",
+        "location_type": "Work From Home",
+        "duration_hours": 4.0,
+        "source": "remote"
+      }
+    ],
+    "total_hours": 4.0
+  }
+}</code></pre>
+<br>
+<hr>
+<br>
+<h2>14. Get Pending Approvals (Manager)</h2>
+<br>
+<p><strong>Endpoint:<strong> `<base_url>/api/method/client_demo.services.remote_attendance.get_pending_approvals`  </p>
+<p><strong>Method:<strong> POST</p>
+<br>
+<h3>Input Parameters</h3>
+<pre><code>{
+  "user_id": "vinod@softlandindia.co.in"
+}</code></pre>
+<br>
+<h3>Output Format</h3>
+<pre><code>{
+  "message": {
+    "success": true,
+    "manager": "VINOD K",
+    "reportees_count": 3,
+    "pending_count": 2,
+    "data": [
+      {
+        "name": "RA-2026-00001",
+        "employee": "AMAL R",
+        "employee_name": "AMAL R",
+        "log_type": "IN",
+        "time": "2026-01-27 09:00:00",
+        "location_type": "Work From Home",
+        "latitude": 10.8505159,
+        "longitude": 76.2710833
+      }
+    ]
+  }
+}</code></pre>
+<br>
+<hr>
+<br>
+<h2>15. Approve Remote Attendance (Manager)</h2>
+<br>
+<p><strong>Endpoint:<strong> `<base_url>/api/method/client_demo.services.remote_attendance.approve_remote_attendance`  </p>
+<p><strong>Method:<strong> POST</p>
+<br>
+<h3>Input Parameters</h3>
+<pre><code>{
+  "name": "RA-2026-00001",
+  "manager": "VINOD K"
+}</code></pre>
+<br>
+<h3>Output Format</h3>
+<pre><code>{
+  "message": {
+    "success": true,
+    "message": "Approved and checkin created",
+    "remote_attendance": "RA-2026-00001",
+    "employee_checkin": "EMP-CKIN-00123"
+  }
+}</code></pre>
+<br>
+<hr>
+<br>
+<h2>16. Reject Remote Attendance (Manager)</h2>
+<br>
+<p><strong>Endpoint:<strong> `<base_url>/api/method/client_demo.services.remote_attendance.reject_remote_attendance`  </p>
+<p><strong>Method:<strong> POST</p>
+<br>
+<h3>Input Parameters</h3>
+<pre><code>{
+  "name": "RA-2026-00001",
+  "manager": "VINOD K",
+  "reason": "GPS location not matching work area"
+}</code></pre>
+<br>
+<table>
+<tr><th>Parameter</th><th>Type</th><th>Required</th><th>Description</th></tr>
+<tr><td>name</td><td>String</td><td>✓ Yes</td><td>Remote Attendance ID</td></tr>
+<tr><td>manager</td><td>String</td><td>✓ Yes</td><td>Manager's Employee ID</td></tr>
+<tr><td>reason</td><td>String</td><td>✓ Yes</td><td>Rejection reason (mandatory)</td></tr>
+</table>
+<br>
+<h3>Output Format</h3>
+<pre><code>{
+  "message": {
+    "success": true,
+    "message": "Remote Attendance RA-2026-00001 rejected",
+    "reason": "GPS location not matching work area"
+  }
+}</code></pre>
+<br>
+<hr>
+<br>
+<h2>17. Get Approval History (Manager)</h2>
+<br>
+<p><strong>Endpoint:<strong> `<base_url>/api/method/client_demo.services.remote_attendance.get_approval_history`  </p>
+<p><strong>Method:<strong> POST</p>
+<br>
+<h3>Input Parameters</h3>
+<pre><code>{
+  "user_id": "vinod@softlandindia.co.in",
+  "from_date": "2026-01-01",
+  "to_date": "2026-01-31"
+}</code></pre>
+<br>
+<h3>Output Format</h3>
+<pre><code>{
+  "message": {
+    "success": true,
+    "manager": "VINOD K",
+    "count": 10,
+    "approved": 8,
+    "rejected": 2,
+    "data": [
+      {
+        "name": "RA-2026-00001",
+        "employee": "AMAL R",
+        "log_type": "IN",
+        "workflow_state": "Approved",
+        "approved_on": "2026-01-27 10:00:00"
+      }
+    ]
+  }
+}</code></pre>
+<br>
+<hr>
+<br>
+<h1>Error Response Format</h1>
+<br>
+<pre><code>{
+  "message": {
+    "success": false,
+    "message": "Error description"
+  }
+}</code></pre>
+<br>
+<hr>
+<br>
+<h1>Important Notes</h1>
+<br>
+<p>1. <strong>Base URL:<strong> Replace `<base_url>` with your actual server URL</p>
+<p>2. <strong>Employee ID:<strong> Always use the unique Employee name field (e.g., "AMAL R")</p>
+<p>3. <strong>Date Format:<strong> All dates must be in YYYY-MM-DD format</p>
+<p>4. <strong>Location Type:<strong> Required only for IN attendance (Work From Home / Field / Service Center)</p>
+<p>5. <strong>Content-Type:<strong> Always set `Content-Type: application/json` header</p>
+<p>6. <strong>Method:<strong> All endpoints use POST method</p>
+<br>
+<hr>
+<br>
+<p><strong>Document Version:<strong> 2.0  </p>
+<p><strong>Total APIs:<strong> 17  </p>
+<p><strong>Last Updated:<strong> January 27, 2026</p>
+<br>
+
+</body>
+</html>

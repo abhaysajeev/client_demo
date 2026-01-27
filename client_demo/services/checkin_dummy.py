@@ -23,9 +23,9 @@ def mark_attendance(employee, log_type=None, device_id=None, shift=None):
         return {"success": False, "message": _(f"Employee {employee} not found")}
     
     user = frappe.session.user
-    # print("$"*50)
-    # print(user)
-    shift_type = frappe.db.get_value("Employee",{"user_id":user},["shift_type"])
+    # Get the default shift for the employee
+    shift_type = frappe.db.get_value("Employee", {"user_id": user}, ["default_shift"])
+
 
 
     try:

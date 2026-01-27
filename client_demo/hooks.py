@@ -5,6 +5,32 @@ app_description = "Demo"
 app_email = "sil@gmail.com"
 app_license = "mit"
 
+# Fixtures
+# --------
+# Export these records when running bench export-fixtures
+fixtures = [
+    # Export Remote Attendance DocType
+    {
+        "dt": "DocType",
+        "filters": [["name", "=", "Remote Attendance"]]
+    },
+    # Export the Workflow
+    {
+        "dt": "Workflow",
+        "filters": [["name", "=", "Remote Attendance Approval"]]
+    },
+    # Export Workflow States
+    {
+        "dt": "Workflow State",
+        "filters": [["name", "in", ["Pending", "Approved", "Rejected", "Cancelled"]]]
+    },
+    # Export Workflow Actions
+    {
+        "dt": "Workflow Action Master",
+        "filters": [["name", "in", ["Approve", "Reject", "Cancel"]]]
+    }
+]
+
 # Apps
 # ------------------
 
