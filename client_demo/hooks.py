@@ -14,7 +14,7 @@ fixtures = [
         "dt": "DocType",
         "filters": [["name", "=", "Remote Attendance"]]
     },
-    # Export the Workflow
+    # Export the Workflow for Remote Attendance
     {
         "dt": "Workflow",
         "filters": [["name", "=", "Remote Attendance Approval"]]
@@ -28,8 +28,14 @@ fixtures = [
     {
         "dt": "Workflow Action Master",
         "filters": [["name", "in", ["Approve", "Reject", "Cancel"]]]
+    },
+    # Export Custom Fields for Leave Application
+    {
+        "dt": "Custom Field",
+        "filters": [["name", "=", "Leave Application-custom_approved_by"]]
     }
 ]
+
 
 # Apps
 # ------------------
